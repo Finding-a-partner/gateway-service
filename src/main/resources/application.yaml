@@ -65,5 +65,10 @@ spring:
           predicates:
             - Path=/chats/**
 
+        - id: feed-service
+          uri: lb://feed-service
+          predicates:
+            - Path=/feed/**
+
 #auth-service:
 #  url: http://auth-service
