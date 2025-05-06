@@ -23,8 +23,8 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/auth/**
-          filters:
-            - StripPrefix=1
+#          filters:
+#            - StripPrefix=1
 
         - id: user-service
           uri: lb://user-service
@@ -39,7 +39,7 @@ spring:
         - id: event-service
           uri: lb://event-service
           predicates:
-            - Path=/events/**
+            - Path=/events/**,/event-members/**
 
         - id: comment-service
           uri: lb://comment-service
@@ -50,3 +50,11 @@ spring:
           uri: lb://notification-service
           predicates:
             - Path=/notifications/**
+
+        - id: message-service
+          uri: lb://message-service
+          predicates:
+            - Path=/chats/**
+
+#auth-service:
+#  url: http://auth-service
