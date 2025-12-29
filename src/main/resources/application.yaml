@@ -22,7 +22,7 @@ spring:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
           '[/**]':
-            allowedOriginPatterns: "http://localhost:3000"  # Укать свой frontend-домен
+            allowedOriginPatterns: "http://localhost:3000"
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
@@ -60,15 +60,22 @@ spring:
           predicates:
             - Path=/notifications/**
 
-        - id: message-service
+        - id: message-service-ws
+          uri: lb://message-service
+          predicates:
+            - Path=/ws/**
+
+        - id: message-service-chats
           uri: lb://message-service
           predicates:
             - Path=/chats/**
+            
+        - id: message-service-messages
+          uri: lb://message-service
+          predicates:
+            - Path=/messages/**
 
         - id: feed-service
           uri: lb://feed-service
           predicates:
             - Path=/feed/**
-
-#auth-service:
-#  url: http://auth-service

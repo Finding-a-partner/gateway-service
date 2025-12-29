@@ -44,6 +44,44 @@ ZwIDAQAB
     }
 
     override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {
+        val path = exchange.request.uri.path
+        val method = exchange.request.method?.name() ?: "UNKNOWN"
+
+        if (path.startsWith("/ws")) {
+            val authHeader = exchange.request.headers.getFirst(HttpHeaders.AUTHORIZATION)
+            
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                val token = authHeader.substring(7)
+                try {
+                    val claims = Jwts.parserBuilder()
+//                    .setSigningKey(publicKeyProvider.getKey())
+                        .setSigningKey(publicKey)
+                        .build()
+                        .parseClaimsJws(token)
+                        .body
+
+                    val userId = claims["userId"] as? String ?: claims.subject
+
+                    val mutatedRequest = exchange.request.mutate()
+                        .header("X-User-Id", userId)
+                        .build()
+
+                    val mutatedExchange = exchange.mutate()
+                        .request(mutatedRequest)
+                        .build()
+
+                    return chain.filter(mutatedExchange)
+                } catch (ex: Exception) {
+                    println("[Gateway JwtFilter] JWT parsing error: ${ex.message}")
+                    ex.printStackTrace()
+                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+                    return exchange.response.setComplete()
+                }
+            } else {
+                println("[Gateway JwtFilter] No Bearer token found, forwarding without X-User-Id")
+            }
+        }
+        
         val authHeader = exchange.request.headers.getFirst(HttpHeaders.AUTHORIZATION)
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -68,7 +106,7 @@ ZwIDAQAB
 
                 return chain.filter(mutatedExchange)
             } catch (ex: Exception) {
-                println("JWT parsing error: ${ex.message}")
+                println("[Gateway JwtFilter] JWT parsing error: ${ex.message}")
                 exchange.response.statusCode = HttpStatus.UNAUTHORIZED
                 return exchange.response.setComplete()
             }
